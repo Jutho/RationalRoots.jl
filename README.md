@@ -23,18 +23,22 @@ julia> RationalRoot{BigInt}(2)
 ```
 
 Another way of creating a `RationalRoot` is using the `signedroot` function, which maps
-a real number `x` to `sign(x)*sqrt(abs(x)) = x/sqrt(abs(x))`. The result is represented as
-a `RationalRoot` type and `rationalize` is used when the input is a floating point number.
+a real number `x` to `sign(x)*sqrt(abs(x)) = x/sqrt(abs(x))`. If `x` is an `Integer` or
+`Rational`, the result is represented as a `RationalRoot` type. For a floating point number,
+`signedroot` will return a floating point number. A `RationalRoot` output can be forced by using `signedroot(<:RationalRoot, x)`, in which case `rationalize` is to rationalize the result.
 
 ```julia
-julia> signedroot(-11)
--√(11//1)
+julia> signedroot(3)
++√(3//1)
 
-julia> signedroot(5.2)
+julia> signedroot(-4.0)
+-2.0
+
+julia> signedroot(RationalRoot, 5.2)
 +√(26//5)
 
-julia> signedroot(RationalRoot{Int8}, -3)
--√(3//1)
+julia> signedroot(RationalRoot{Int8}, 8)
++√(8//1)
 ```
 
 There is also the inverse function `signedsquare`, which maps a number `x` to `sign(x)*x^2 = x*abs(x)`.

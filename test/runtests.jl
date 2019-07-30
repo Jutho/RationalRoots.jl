@@ -40,6 +40,10 @@ inttypes = (bitstypes..., BigInt)
     y = RationalRoot{T}(Val{:inner}(), 0.4)
     @test RationalRoot(y) === y
 
+    for T in (Float32, Float64, BigFloat)
+        @test (@inferred RationalRoot(T(-1//4))).signedsquare === -1//16
+    end
+
     for T in inttypes
         @test typeof(@inferred Rational(one(T))) == Rational{T}
     end
@@ -64,8 +68,8 @@ end
 
 @testset "algebra" begin
     for T in bitstypes
-        a = rand(-T(5):T(5)) // rand(T(1):T(5))
-        b = rand(-T(5):T(5)) // rand(T(1):T(5))
+        a = -rand(T(1):T(5)) // rand(T(1):T(5))
+        b = rand(T(1):T(5)) // rand(T(1):T(5))
 
         for op in (+, -, inv)
             @test (@inferred op(signedroot(a))) === signedroot(op(a))
@@ -76,18 +80,40 @@ end
             @test (@inferred op(signedroot(a),b)) === signedroot(op(a,signedsquare(b)))
             @test (@inferred op(a,signedroot(b))) === signedroot(op(signedsquare(a),b))
         end
+
+        @test (@inferred sign(signedroot(a))) === sign(a)*one(RationalRoot{T})
+
+        x = signedroot(a)
+        @test one(x) * x === x
+        @test isone(one(x))
+        @test !iszero(one(x))
+        @test iszero(zero(x))
+        @test !isone(zero(x))
+        @test zero(x) * x === zero(x)
     end
 end
 
 @testset "conversion and promotion" begin
     for T in inttypes
+        x = signedroot(T(1)//T(3))
         for T2 in inttypes
             @test promote_type(RationalRoot{T}, T2) == RationalRoot{promote_type(T,T2)}
             @test promote_type(RationalRoot{T}, Rational{T2}) ==
                                                         RationalRoot{promote_type(T,T2)}
+
+            @test typeof(x*one(T2)) == RationalRoot{promote_type(T,T2)}
+            @test typeof(x*one(Rational{T2})) == RationalRoot{promote_type(T,T2)}
+
+            @test typeof(x+one(T2)) == Float64
+            @test typeof(x-one(Rational{T2})) == Float64
         end
         for T2 in (Float32, Float64, BigFloat)
             @test promote_type(RationalRoot{T}, T2) == T2
+
+            @test typeof(x+one(T2)) == T2
+            @test typeof(x-one(T2)) == T2
+            @test typeof(x*one(T2)) == T2
+            @test typeof(x/one(T2)) == T2
         end
     end
 
@@ -101,6 +127,10 @@ end
         h = rand(UInt)
         @test hash(signedroot(RationalRoot{T}, 4), h) == hash(2, h)
         @test hash(signedroot(RationalRoot{T}, -4//9), h) == hash(-2//3, h)
+        @test hash(signedroot(1//3)) != hash(sqrt(1/3))
+
+        @test typemax(RationalRoot{T}) == typemax(Rational{T})
+        @test typemin(RationalRoot{T}) == typemin(Rational{T})
     end
     for T in (Float32, Float64, BigFloat)
         @test signedroot(RationalRoot, T(4.0)) == T(2.0)
@@ -131,4 +161,14 @@ end
 
     x = big(signedroot(-4//9))
     @test x == -2//3 && typeof(signedsquare(x)) == Rational{BigInt}
+end
+
+@testset "comparison" begin
+
+
+end
+
+@testset "show" begin
+    @test sprint(show, signedroot(+1//3)) == "+√(1//3)"
+    @test sprint(show, signedroot(-2//5)) == "-√(2//5)"
 end

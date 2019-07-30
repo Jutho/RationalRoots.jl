@@ -81,7 +81,7 @@ Base.promote_rule(::Type{RationalRoot{T1}}, ::Type{RationalRoot{T2}}) where
     {T1<:Integer, T2<:Integer} = RationalRoot{promote_type(T1, T2)}
 
 RationalRoot(x::RationalRoot) = x
-RationalRoot(x::Number) = signedroot(signedsquare(x))
+RationalRoot(x::Number) = signedroot(RationalRoot, signedsquare(x))
 
 function Base.convert(T::Type{<:AbstractFloat}, x::RationalRoot)
     s = _convert(T, signedsquare(x))
