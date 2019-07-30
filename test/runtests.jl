@@ -54,8 +54,8 @@ end
 
 @testset "algebra" begin
     for T in bitstypes
-        a = rand(-T(100):T(100)) // rand(-T(100):T(100))
-        b = rand(-T(100):T(100)) // rand(-T(100):T(100))
+        a = rand(-T(8):T(8)) // rand(-T(8):T(8))
+        b = rand(-T(8):T(8)) // rand(-T(8):T(8))
         @test (@inferred -signedroot(a)) === signedroot(-a)
         @test (@inferred inv(signedroot(a))) === signedroot(inv(a))
         @test (@inferred signedroot(a)*signedroot(b)) === signedroot(a*b)
