@@ -56,11 +56,26 @@ end
     for T in bitstypes
         a = rand(-T(8):T(8)) // rand(T(1):T(8))
         b = rand(-T(8):T(8)) // rand(T(1):T(8))
-        @test (@inferred -signedroot(a)) === signedroot(-a)
-        @test (@inferred inv(signedroot(a))) === signedroot(inv(a))
-        @test (@inferred signedroot(a)*signedroot(b)) === signedroot(a*b)
-        @test (@inferred signedroot(a)/signedroot(b)) === signedroot(a/b)
-        @test (@inferred signedroot(a)\signedroot(b)) === signedroot(a\b)
-        @test (@inferred signedroot(a)//signedroot(b)) === signedroot(a//b)
+
+        for op in (+, -, inv)
+            @test (@inferred op(signedroot(a))) === signedroot(op(a))
+        end
+
+        for op in (*, /, \, //)
+            @test (@inferred op(signedroot(a),signedroot(b))) === signedroot(op(a,b))
+            @test (@inferred op(signedroot(a),b)) === signedroot(op(a,signedsquare(b)))
+            @test (@inferred op(a,signedroot(b))) === signedroot(op(signedsquare(a),b))
+        end
     end
+end
+
+@testset "conversion and promotion" begin
+    for T in bitstypes
+        @test isinteger(signedroot(T(-4)))
+        @test !isinteger(signedroot(T(3)))
+        @test signedroot(RationalRoot, T(4)) == 2
+    end
+    @test signedroot(RationalRoot, 4.0) == 2.0
+    @test signedroot(RationalRoot, 2.0) ≈ sqrt(2.0)
+    @test signedroot(RationalRoot, 2.0) != sqrt(2.0)
 end
