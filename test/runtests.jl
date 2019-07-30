@@ -54,8 +54,8 @@ end
 
 @testset "algebra" begin
     for T in bitstypes
-        a = rand(-T(8):T(8)) // rand(T(1):T(8))
-        b = rand(-T(8):T(8)) // rand(T(1):T(8))
+        a = rand(-T(5):T(5)) // rand(T(1):T(5))
+        b = rand(-T(5):T(5)) // rand(T(1):T(5))
 
         for op in (+, -, inv)
             @test (@inferred op(signedroot(a))) === signedroot(op(a))
@@ -70,12 +70,33 @@ end
 end
 
 @testset "conversion and promotion" begin
-    for T in bitstypes
+    for T in inttypes
         @test isinteger(signedroot(T(-4)))
         @test !isinteger(signedroot(T(3)))
         @test signedroot(RationalRoot, T(4)) == 2
+        @test signedroot(RationalRoot{T}, 4) == 2
+        @test signedroot(RationalRoot{T}, -4//9) == -2//3
+
+        h = rand(UInt)
+        @test hash(signedroot(RationalRoot{T}, 4), h) == hash(2, h)
+        @test hash(signedroot(RationalRoot{T}, -4//9), h) == hash(-2//3, h)
     end
-    @test signedroot(RationalRoot, 4.0) == 2.0
-    @test signedroot(RationalRoot, 2.0) ≈ sqrt(2.0)
-    @test signedroot(RationalRoot, 2.0) != sqrt(2.0)
+    for T in (Float32, Float64, BigFloat)
+        @test signedroot(RationalRoot, T(4.0)) == T(2.0)
+        @test signedroot(RationalRoot, T(2.0)) ≈ sqrt(T(2.0))
+        @test signedroot(RationalRoot, T(2.0)) != sqrt(T(2.0))
+        @test signedroot(RationalRoot{BigInt}, one(T)/T(4.0)) == one(T)/T(2.0)
+        @test signedroot(RationalRoot{BigInt}, -one(T)/T(3.0)) ≈ -sqrt(one(T)/T(3.0))
+        @test signedroot(RationalRoot{BigInt}, one(T)/T(3.0)) != sqrt(one(T)/T(3.0))
+    end
+
+    for T in bitstypes
+        @test convert(T, signedroot(4)) === T(2)
+        @test convert(T, signedroot(T(4))) === T(2)
+        @test_throws InexactError convert(T, signedroot(3))
+
+        @test convert(Rational{T}, signedroot(4//9)) === Rational{T}(2//3)
+        @test_throws InexactError convert(Rational{T}, signedroot(3//2))
+    end
+
 end

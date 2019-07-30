@@ -79,8 +79,6 @@ Base.promote_rule(::Type{RationalRoot{T1}}, ::Type{Rational{T2}}) where
     {T1<:Integer, T2<:Integer} = RationalRoot{promote_type(T1, T2)}
 Base.promote_rule(::Type{RationalRoot{T1}}, ::Type{RationalRoot{T2}}) where
     {T1<:Integer, T2<:Integer} = RationalRoot{promote_type(T1, T2)}
-Base.promote_rule(::Type{RationalRoot{T1}}, T2::Type{<:AbstractFloat}) where
-    {T1<:Integer} = promote_type(T1, T2)
 
 RationalRoot(x::RationalRoot) = x
 RationalRoot(x::Number) = signedroot(signedsquare(x))
