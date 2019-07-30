@@ -8,6 +8,8 @@ export
     signedroot,
     signedsquare
 
+const IntOrRational{T} = Union{T,Rational{T}} where T<:Integer
+
 """
     RationalRoot{T} where {T<:Integer} <: AbstractIrrational
 
@@ -22,9 +24,9 @@ RationalRoot{T}(x::Real) where T<:Integer = signedroot(RationalRoot{T}, signedsq
 RationalRoot{T}(x::RationalRoot{T}) where T<:Integer = x
 
 """
-    signedroot([T<:RationalRoot,] x)
+    signedroot([R<:RationalRoot,] x)
 
-Return `sign(x)*sqrt(abs(x)) = x/sqrt(abs(x))` as a rational square root of type `T`. If `T` is not given, return an appropriate `RationalRoot` type. Uses `Base.rationalize` if `x` is not an `Integer` or `Rational` to bring `x` into `Rational` form.
+Return `sign(x)*sqrt(abs(x)) == x/sqrt(abs(x))`. If the first argument is not present, this value is given as a floating point number if `x isa AbstractFloat`, and as a `RationalRoot` if `x isa Union{Integer,Rational}`. With the first argument present, the return type is specified as `RationalRoot` or a specific `RationalRoot{T}`, and for floating point numbers `x` the result will first be rationalized by `Base.rationalize{T}`.
 
 # Examples
 
@@ -32,14 +34,18 @@ Return `sign(x)*sqrt(abs(x)) = x/sqrt(abs(x))` as a rational square root of type
 julia> signedroot(3)
 +√(3//1)
 
-julia> signedroot(-5.2)
--√(26//5)
+julia> signedroot(-4.0)
+-2.0
+
+julia> signedroot(RationalRoot, 5.2)
++√(26//5)
 
 julia> signedroot(RationalRoot{Int8}, 8)
 +√(8//1)
 ```
 """
-signedroot(x::Real) = signedroot(RationalRoot, x)
+signedroot(x::Real) = sign(x)*sqrt(abs(x))
+signedroot(x::IntOrRational{T}) where {T<:Integer} = signedroot(RationalRoot{T}, x)
 signedroot(::Type{RationalRoot}, x) = signedroot(RationalRoot, rationalize(x))
 signedroot(::Type{RationalRoot}, x::T) where T<:Integer = signedroot(RationalRoot{T}, x)
 signedroot(::Type{RationalRoot}, x::Rational{T}) where T<:Integer =
@@ -134,8 +140,6 @@ for op in (:<, :≤, :(==))
     @eval Base.$op(x::RationalRoot, y::Real) = $op(signedsquare(x), signedsquare(y))
     @eval Base.$op(x::Real, y::RationalRoot) = $op(signedsquare(x), signedsquare(y))
 end
-
-const IntOrRational{T} = Union{T,Rational{T}} where T<:Integer
 
 Base.:+(x::RationalRoot) = signedroot(+signedsquare(x))
 Base.:-(x::RationalRoot) = signedroot(-signedsquare(x))
