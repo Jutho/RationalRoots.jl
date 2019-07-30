@@ -190,13 +190,10 @@ function findsignedroot(x::Rational)
         return n//d
     end
 end
-issignedsquare(x::Integer) = (findsignedroot(x) !== nothing)
-issignedsquare(x::Rational) = (findsignedroot(numerator(x)) !== nothing &&
-                                    findsignedroot(denominator(x)) !== nothing)
 
 function Base.isinteger(x::RationalRoot)
     s = signedsquare(x)
-    return isone(denominator(s)) && issignedsquare(numerator(s))
+    return isone(denominator(s)) && findsignedroot(numerator(s)) !== nothing
 end
 
 end

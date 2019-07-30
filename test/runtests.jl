@@ -4,6 +4,7 @@ bitstypes  = (Int8, Int16, Int32, Int64, Int128)
 inttypes = (bitstypes..., BigInt)
 @testset "Constructor" begin
     r = rand(Float64)
+    x = RationalRoot{Int}(Val{:inner}(), -3//5)
     for T in bitstypes
         @test (@inferred RationalRoot{T}(1)).signedsquare === Rational{T}(1)
         @test (@inferred RationalRoot{T}(-1)).signedsquare === Rational{T}(-1)
@@ -13,6 +14,10 @@ inttypes = (bitstypes..., BigInt)
         @test (@inferred RationalRoot{T}(-1//2)).signedsquare === Rational{T}(-1//4)
         @test (@inferred RationalRoot{T}(r)).signedsquare ===
                                                 rationalize(T, signedsquare(r))
+        @test (@inferred RationalRoot{T}(x)).signedsquare === Rational{T}(x.signedsquare)
+
+        y = RationalRoot{T}(Val{:inner}(), 0.4)
+        @test RationalRoot(y) === y
     end
     T = BigInt
     s = (@inferred RationalRoot{T}(1)).signedsquare
@@ -29,6 +34,11 @@ inttypes = (bitstypes..., BigInt)
     @test s == convert(Rational{T}, -1//4) && typeof(s) == Rational{T}
     s = (@inferred RationalRoot{T}(r)).signedsquare
     @test s == rationalize(T, signedsquare(r)) && typeof(s) == Rational{T}
+    s = (@inferred RationalRoot{T}(x)).signedsquare
+    @test s == x.signedsquare && typeof(s) == Rational{T}
+
+    y = RationalRoot{T}(Val{:inner}(), 0.4)
+    @test RationalRoot(y) === y
 
     for T in inttypes
         @test typeof(@inferred Rational(one(T))) == Rational{T}
@@ -71,6 +81,17 @@ end
 
 @testset "conversion and promotion" begin
     for T in inttypes
+        for T2 in inttypes
+            @test promote_type(RationalRoot{T}, T2) == RationalRoot{promote_type(T,T2)}
+            @test promote_type(RationalRoot{T}, Rational{T2}) ==
+                                                        RationalRoot{promote_type(T,T2)}
+        end
+        for T2 in (Float32, Float64, BigFloat)
+            @test promote_type(RationalRoot{T}, T2) == T2
+        end
+    end
+
+    for T in inttypes
         @test isinteger(signedroot(T(-4)))
         @test !isinteger(signedroot(T(3)))
         @test signedroot(RationalRoot, T(4)) == 2
@@ -97,6 +118,17 @@ end
 
         @test convert(Rational{T}, signedroot(4//9)) === Rational{T}(2//3)
         @test_throws InexactError convert(Rational{T}, signedroot(3//2))
-    end
 
+        for T2 in (Float32, Float64, BigFloat)
+            @test T2(signedroot(T(-2))) ≈ -sqrt(T2(T(2)))
+        end
+    end
+    T = BigInt
+    a = big(typemax(Int128))^2
+    b = a + 1
+    @test convert(T, signedroot(a)) == typemax(Int128)
+    @test convert(Rational{T}, signedroot(a)//b) == typemax(Int128)//b
+
+    x = big(signedroot(-4//9))
+    @test x == -2//3 && typeof(signedsquare(x)) == Rational{BigInt}
 end
