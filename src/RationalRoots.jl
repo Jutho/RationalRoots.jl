@@ -135,8 +135,12 @@ end
 
 for op in (:<, :≤, :(==))
     @eval Base.$op(x::RationalRoot, y::RationalRoot) = $op(signedsquare(x), signedsquare(y))
-    @eval Base.$op(x::RationalRoot, y::Real) = $op(signedsquare(x), signedsquare(y))
-    @eval Base.$op(x::Real, y::RationalRoot) = $op(signedsquare(x), signedsquare(y))
+
+    for T in (Rational, Rational{BigInt}, Int8, Int16, Int32, Int64, BigInt, AbstractFloat, Float32, Float64)
+
+        @eval Base.$op(x::RationalRoot, y::$T) = $op(signedsquare(x), signedsquare(y))
+        @eval Base.$op(x::$T, y::RationalRoot) = $op(signedsquare(x), signedsquare(y))
+    end
 end
 
 Base.:+(x::RationalRoot) = signedroot(+signedsquare(x))
@@ -152,6 +156,8 @@ end
 
 Base.inv(x::RationalRoot) = signedroot(inv(signedsquare(x)))
 
+Base.one(x::RationalRoot) = one(typeof(x))
+Base.zero(x::RationalRoot) = zero(typeof(x))
 Base.one(::Type{RationalRoot{T}}) where T<:Integer = signedroot(one(T))
 Base.zero(::Type{RationalRoot{T}}) where T<:Integer = signedroot(zero(T))
 Base.isone(x::RationalRoot) = isone(signedsquare(x))

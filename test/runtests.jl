@@ -85,6 +85,8 @@ end
 
         x = signedroot(a)
         @test one(x) * x === x
+        @test zero(x) === zero(typeof(x))
+        @test one(x) === one(typeof(x))
         @test isone(one(x))
         @test !iszero(one(x))
         @test iszero(zero(x))
@@ -154,18 +156,45 @@ end
         end
     end
     T = BigInt
-    a = big(typemax(Int128))^2
+    a = big(typemax(Int64))^2
     b = a + 1
-    @test convert(T, signedroot(a)) == typemax(Int128)
-    @test convert(Rational{T}, signedroot(a)//b) == typemax(Int128)//b
+    @test convert(T, signedroot(a)) == typemax(Int64)
+    @test convert(Rational{T}, signedroot(a)//b) == typemax(Int64)//b
+    for T in (Float32, Float64, BigFloat)
+        @test T( signedroot(a)//b ) ≈ T( typemax(Int64)/b )
+    end
 
     x = big(signedroot(-4//9))
     @test x == -2//3 && typeof(signedsquare(x)) == Rational{BigInt}
+
+    for T in (Int8, Int16, Int32, Int64)
+        T2 = widen(T)
+        @test widen(RationalRoot{T}) == RationalRoot{T2}
+        @test widen(signedroot(T(3)//T(5))) === signedroot(T2(3)//T2(5))
+    end
 end
 
 @testset "comparison" begin
-
-
+    for T in inttypes
+        @test RationalRoot{T}(3//4) <= 3//4
+        @test RationalRoot{T}(3//4) <= 3/4
+        @test 3//4 <= RationalRoot{T}(3//4)
+        @test 3/4 <= RationalRoot{T}(3//4)
+        @test 2//5 <= RationalRoot{T}(3//4) <= 4//5
+        @test 4//5 >= RationalRoot{T}(3//4) >= 2//5
+        @test 0 <= RationalRoot{T}(3//5) <= 1
+        @test 1 >= RationalRoot{T}(3//5) >= 0
+        @test 2//5 < RationalRoot{T}(3//5) < 4//5
+        @test 4//5 > RationalRoot{T}(3//5) > 2//5
+        @test 0 < RationalRoot{T}(3//5) < 1
+        @test 1 > RationalRoot{T}(3//5) > 0
+        @test -Inf < RationalRoot{T}(3//5) < Inf
+        @test typemin(RationalRoot{T}) < RationalRoot{T}(3//5) < typemax(RationalRoot{T})
+        @test typemin(Rational{T}) < RationalRoot{T}(3//5) < typemax(Rational{T})
+        if isbitstype(T)
+            @test typemin(T) < RationalRoot{T}(3//5) < typemax(T)
+        end
+    end
 end
 
 @testset "show" begin
