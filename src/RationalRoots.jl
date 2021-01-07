@@ -154,6 +154,9 @@ for op in (:*, :/, :\, ://)
         signedroot($op(signedsquare(x), signedsquare(y)))
 end
 
+# When squared, return Rational type:
+Base.literal_pow(::typeof(^), x::RationalRoot, ::Val{2}) = abs(x.signedsquare)
+
 Base.inv(x::RationalRoot) = signedroot(inv(signedsquare(x)))
 
 Base.one(x::RationalRoot) = one(typeof(x))
