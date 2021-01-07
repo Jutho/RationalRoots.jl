@@ -92,6 +92,7 @@ end
         @test iszero(zero(x))
         @test !isone(zero(x))
         @test zero(x) * x === zero(x)
+        @test x^2 === abs(a)
     end
 end
 
