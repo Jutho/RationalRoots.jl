@@ -87,11 +87,13 @@ function Base.convert(T::Type{<:AbstractFloat}, x::RationalRoot)
     s = _convert(T, signedsquare(x))
     s < zero(s) ? -sqrt(-s) : sqrt(s)
 end
+const TYPEMAX_INT_BIG = big(typemax(Int))
+const TYPEMIN_INT_BIG = big(typemin(Int))
 function _convert(T::Type{<:Union{Float32,Float64}}, x::Rational{BigInt})
     n, d = numerator(x), denominator(x)
-    if typemin(Int) <= n <= typemax(Int) && typemin(Int) <= d <= typemax(Int)
+    if TYPEMIN_INT_BIG <= n <= typemax(Int) && TYPEMIN_INT_BIG <= d <= typemax(Int)
         # fast path, don't go via BigFloat
-        convert(T, convert(Int, n)//convert(Int, d))
+        convert(T, convert(Int, n)/convert(Int, d))
     else
         convert(T, x)
     end
