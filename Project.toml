@@ -1,13 +1,16 @@
 name = "RationalRoots"
 uuid = "308eb6b3-cc68-5ff3-9e97-c3c4da4fa681"
 authors = ["Jutho Haegeman"]
-version = "0.2.0"
+version = "0.2.1"
 
 [compat]
+Aqua = "0.6, 0.7, 0.8"
+Test = "1"
 julia = "1"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Aqua", "Test"]

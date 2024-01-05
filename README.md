@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.org/Jutho/RationalRoots.jl.svg?branch=master)](https://travis-ci.org/Jutho/RationalRoots.jl)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
-[![Coverage Status](https://coveralls.io/repos/Jutho/RationalRoots.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/Jutho/RationalRoots.jl?branch=master)
 [![codecov.io](http://codecov.io/github/Jutho/RationalRoots.jl/coverage.svg?branch=master)](http://codecov.io/github/Jutho/RationalRoots.jl?branch=master)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 This package provides a data type `RationalRoot{T<:Integer}` to exactly represent the (positive or negative) square root of a rational number of type `Rational{T}`.
 

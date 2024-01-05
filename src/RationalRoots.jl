@@ -1,14 +1,14 @@
 module RationalRoots
 
 export
-    # Abstract types
-    RationalRoot,
+# Abstract types
+      RationalRoot,
 
-    # Functions
-    signedroot,
-    signedsquare
+# Functions
+      signedroot,
+      signedsquare
 
-const IntOrRational{T} = Union{T,Rational{T}} where T<:Integer
+const IntOrRational{T} = Union{T,Rational{T}} where {T<:Integer}
 
 """
     RationalRoot{T} where {T<:Integer} <: AbstractIrrational
@@ -18,10 +18,10 @@ Type for representing the positive or negative square root of a positive `Ration
 struct RationalRoot{T<:Integer} <: AbstractIrrational
     signedsquare::Rational{T}
     # Inner constructor that is only used to define signedroot(::Type{RationalRoot{T}}, x)
-    RationalRoot{T}(::Val{:inner}, signedsquare) where T<:Integer = new(signedsquare)
+    RationalRoot{T}(::Val{:inner}, signedsquare) where {T<:Integer} = new(signedsquare)
 end
-RationalRoot{T}(x::Real) where T<:Integer = signedroot(RationalRoot{T}, signedsquare(x))
-RationalRoot{T}(x::RationalRoot{T}) where T<:Integer = x
+RationalRoot{T}(x::Real) where {T<:Integer} = signedroot(RationalRoot{T}, signedsquare(x))
+RationalRoot{T}(x::RationalRoot{T}) where {T<:Integer} = x
 
 """
     signedroot([R<:RationalRoot,] x)
@@ -44,15 +44,19 @@ julia> signedroot(RationalRoot{Int8}, 8)
 +√(8//1)
 ```
 """
-signedroot(x::Real) = sign(x)*sqrt(abs(x))
+signedroot(x::Real) = sign(x) * sqrt(abs(x))
 signedroot(x::IntOrRational{T}) where {T<:Integer} = signedroot(RationalRoot{T}, x)
 signedroot(::Type{RationalRoot}, x) = signedroot(RationalRoot, rationalize(x))
-signedroot(::Type{RationalRoot}, x::T) where T<:Integer = signedroot(RationalRoot{T}, x)
-signedroot(::Type{RationalRoot}, x::Rational{T}) where T<:Integer =
-    signedroot(RationalRoot{T}, x)
-signedroot(::Type{RationalRoot{T}}, x::AbstractFloat) where T<:Integer =
-    signedroot(RationalRoot{T}, rationalize(T, x))
-signedroot(::Type{RationalRoot{T}}, x) where T<:Integer = RationalRoot{T}(Val{:inner}(), x)
+signedroot(::Type{RationalRoot}, x::T) where {T<:Integer} = signedroot(RationalRoot{T}, x)
+function signedroot(::Type{RationalRoot}, x::Rational{T}) where {T<:Integer}
+    return signedroot(RationalRoot{T}, x)
+end
+function signedroot(::Type{RationalRoot{T}}, x::AbstractFloat) where {T<:Integer}
+    return signedroot(RationalRoot{T}, rationalize(T, x))
+end
+function signedroot(::Type{RationalRoot{T}}, x) where {T<:Integer}
+    return RationalRoot{T}(Val{:inner}(), x)
+end
 
 """
     signedsquare(x)
@@ -70,22 +74,31 @@ julia> signedsquare(-RationalRoot{Int}(3//2))
 -9//4
 ```
 """
-signedsquare(x) = x*abs(x)
+signedsquare(x) = x * abs(x)
 signedsquare(x::RationalRoot) = x.signedsquare
 
-Base.promote_rule(::Type{RationalRoot{T1}}, ::Type{T2}) where
-    {T1<:Integer, T2<:Integer} = RationalRoot{promote_type(T1, T2)}
-Base.promote_rule(::Type{RationalRoot{T1}}, ::Type{Rational{T2}}) where
-    {T1<:Integer, T2<:Integer} = RationalRoot{promote_type(T1, T2)}
-Base.promote_rule(::Type{RationalRoot{T1}}, ::Type{RationalRoot{T2}}) where
-    {T1<:Integer, T2<:Integer} = RationalRoot{promote_type(T1, T2)}
+function Base.promote_rule(::Type{RationalRoot{T1}},
+                           ::Type{T2}) where
+         {T1<:Integer,T2<:Integer}
+    return RationalRoot{promote_type(T1, T2)}
+end
+function Base.promote_rule(::Type{RationalRoot{T1}},
+                           ::Type{Rational{T2}}) where
+         {T1<:Integer,T2<:Integer}
+    return RationalRoot{promote_type(T1, T2)}
+end
+function Base.promote_rule(::Type{RationalRoot{T1}},
+                           ::Type{RationalRoot{T2}}) where
+         {T1<:Integer,T2<:Integer}
+    return RationalRoot{promote_type(T1, T2)}
+end
 
 RationalRoot(x::RationalRoot) = x
-RationalRoot(x::Number) = signedroot(RationalRoot, signedsquare(x))
+RationalRoot(x::Real) = signedroot(RationalRoot, signedsquare(x))
 
 function Base.convert(T::Type{<:AbstractFloat}, x::RationalRoot)
     s = _convert(T, signedsquare(x))
-    s < zero(s) ? -sqrt(-s) : sqrt(s)
+    return s < zero(s) ? -sqrt(-s) : sqrt(s)
 end
 const TYPEMAX_INT_BIG = big(typemax(Int))
 const TYPEMIN_INT_BIG = big(typemin(Int))
@@ -93,7 +106,7 @@ function _convert(T::Type{<:Union{Float32,Float64}}, x::Rational{BigInt})
     n, d = numerator(x), denominator(x)
     if TYPEMIN_INT_BIG <= n <= typemax(Int) && TYPEMIN_INT_BIG <= d <= typemax(Int)
         # fast path, don't go via BigFloat
-        convert(T, convert(Int, n)/convert(Int, d))
+        convert(T, convert(Int, n) / convert(Int, d))
     else
         convert(T, x)
     end
@@ -138,7 +151,10 @@ end
 for op in (:<, :≤, :(==))
     @eval Base.$op(x::RationalRoot, y::RationalRoot) = $op(signedsquare(x), signedsquare(y))
 
-    for T in (Rational, Rational{BigInt}, Int8, Int16, Int32, Int64, BigInt, AbstractFloat, Float32, Float64)
+    for T in
+        (Rational, Rational{BigInt}, Int8, Int16, Int32, Int64, BigInt, Float16, Float32,
+         Float64, BigFloat, AbstractFloat)
+        # list is overcomplete, but nonetheless necessary to avoid ambiguity warnings with definitions in irrationals.jl
 
         @eval Base.$op(x::RationalRoot, y::$T) = $op(signedsquare(x), signedsquare(y))
         @eval Base.$op(x::$T, y::RationalRoot) = $op(signedsquare(x), signedsquare(y))
@@ -147,14 +163,18 @@ end
 
 Base.:+(x::RationalRoot) = signedroot(+signedsquare(x))
 Base.:-(x::RationalRoot) = signedroot(-signedsquare(x))
+
 for op in (:*, :/, :\, ://)
-    @eval Base.$op(x::RationalRoot, y::RationalRoot) =
-        signedroot($op(signedsquare(x), signedsquare(y)))
-    @eval Base.$op(x::RationalRoot, y::IntOrRational) =
-        signedroot($op(signedsquare(x), signedsquare(y)))
-    @eval Base.$op(x::IntOrRational, y::RationalRoot) =
-        signedroot($op(signedsquare(x), signedsquare(y)))
+    @eval Base.$op(x::RationalRoot, y::RationalRoot) = signedroot($op(signedsquare(x),
+                                                                      signedsquare(y)))
+    @eval Base.$op(x::RationalRoot, y::IntOrRational) = signedroot($op(signedsquare(x),
+                                                                       signedsquare(y)))
+    @eval Base.$op(x::IntOrRational, y::RationalRoot) = signedroot($op(signedsquare(x),
+                                                                       signedsquare(y)))
 end
+# necessary to avoid ambiguity with '*(x::Bool, y::AbstractIrrational)'
+Base.:*(x::Bool, y::RationalRoot) = signedroot(x * signedsquare(y))
+# no need to take signedsquare of `x::Bool`
 
 # When squared, return Rational type:
 Base.literal_pow(::typeof(^), x::RationalRoot, ::Val{2}) = abs(x.signedsquare)
@@ -163,31 +183,31 @@ Base.inv(x::RationalRoot) = signedroot(inv(signedsquare(x)))
 
 Base.one(x::RationalRoot) = one(typeof(x))
 Base.zero(x::RationalRoot) = zero(typeof(x))
-Base.one(::Type{RationalRoot{T}}) where T<:Integer = signedroot(one(T))
-Base.zero(::Type{RationalRoot{T}}) where T<:Integer = signedroot(zero(T))
+Base.one(::Type{RationalRoot{T}}) where {T<:Integer} = signedroot(one(T))
+Base.zero(::Type{RationalRoot{T}}) where {T<:Integer} = signedroot(zero(T))
 Base.isone(x::RationalRoot) = isone(signedsquare(x))
 Base.iszero(x::RationalRoot) = iszero(signedsquare(x))
 
-Base.sign(x::RationalRoot) = sign(signedsquare(x))*one(x)
+Base.sign(x::RationalRoot) = sign(signedsquare(x)) * one(x)
 
 Base.big(x::RationalRoot) = convert(RationalRoot{BigInt}, x)
 
-Base.widen(::Type{RationalRoot{T}}) where T<:Integer = RationalRoot{widen(T)}
+Base.widen(::Type{RationalRoot{T}}) where {T<:Integer} = RationalRoot{widen(T)}
 
-Base.typemax(::Type{RationalRoot{T}}) where T<:Integer = signedroot(typemax(Rational{T}))
-Base.typemin(::Type{RationalRoot{T}}) where T<:Integer = signedroot(typemin(Rational{T}))
+Base.typemax(::Type{RationalRoot{T}}) where {T<:Integer} = signedroot(typemax(Rational{T}))
+Base.typemin(::Type{RationalRoot{T}}) where {T<:Integer} = signedroot(typemin(Rational{T}))
 
 function Base.show(io::IO, x::RationalRoot)
     signedsquare(x) < 0 ? print(io, "-√(") : print(io, "+√(")
     show(io, abs(signedsquare(x)))
-    print(io, ")")
+    return print(io, ")")
 end
 
 function findsignedroot(x::Integer)
     n = abs(x)
     k = isqrt(n)
-    if k*k == n
-        return sign(x)*k
+    if k * k == n
+        return sign(x) * k
     else
         return nothing
     end
@@ -198,7 +218,7 @@ function findsignedroot(x::Rational)
     if n === nothing || d === nothing
         return nothing
     else
-        return n//d
+        return n // d
     end
 end
 
