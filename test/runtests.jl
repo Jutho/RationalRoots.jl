@@ -203,6 +203,6 @@ end
     @test sprint(show, signedroot(-2 // 5)) == "-√(2//5)"
 end
 
-@testset "Aqua" verbose = true begin
+@testset "Aqua" begin
     Aqua.test_all(RationalRoots)
 end
